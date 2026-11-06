@@ -53,6 +53,15 @@ Suggestion for indoor applications:
 1. Reduce the `odometry.preprocessing.max_range` to 50.0, this will automatically reduce the `voxel_size` to 0.5.
 2. Reduce the `local_mapper.splitting_distance` to a suitable distance based on the scale of the indoor environment.
 
+To customize GT trajectory rendering in `--visualize` mode, set:
+
+```yaml
+visualization:
+  gt_color: [1.0, 0.0, 0.0] # RGB in [0, 1]
+  gt_dash_on: 1.0            # meters drawn
+  gt_dash_off: 1.0           # meters skipped
+```
+
 ### Install Python API (developer mode)
 For development purposes:
 

@@ -29,5 +29,6 @@ from .config import (
     MapClosuresConfig,
     OccupancyMapperConfig,
     PoseGraphOptimizerConfig,
+    VisualizationConfig,
     load_config,
 )

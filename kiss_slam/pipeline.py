@@ -50,7 +50,19 @@ class SlamPipeline(OdometryPipeline):
         self.config = self.slam_config.kiss_icp_config()
         self.visualize = visualize
         self.kiss_slam = KissSLAM(self.slam_config)
-        self.visualizer = RegistrationVisualizer() if self.visualize else StubVisualizer()
+        gt_poses = getattr(dataset, "gt_poses", None)
+        if self.visualize and gt_poses is None:
+            print("KissSLAM| GT trajectory unavailable for this dataset, showing estimate only")
+        self.visualizer = (
+            RegistrationVisualizer(
+                gt_poses=gt_poses,
+                gt_color=self.slam_config.visualization.gt_color,
+                dash_on=self.slam_config.visualization.gt_dash_on,
+                dash_off=self.slam_config.visualization.gt_dash_off,
+            )
+            if self.visualize
+            else StubVisualizer()
+        )
         self.refuse_scans = refuse_scans
 
     def run(self):

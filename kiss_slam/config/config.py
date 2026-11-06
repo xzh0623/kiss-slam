@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 from kiss_icp.config.config import (
@@ -34,7 +34,7 @@ from kiss_icp.config.config import (
 )
 from kiss_icp.config.parser import KISSConfig
 from map_closures.config.config import MapClosuresConfig
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,6 +68,12 @@ class PoseGraphOptimizerConfig(BaseModel):
     max_iterations: int = 10
 
 
+class VisualizationConfig(BaseModel):
+    gt_color: List[float] = Field(default=[1.0, 0.0, 0.0], min_length=3, max_length=3)
+    gt_dash_on: float = Field(default=1.0, gt=0.0)
+    gt_dash_off: float = Field(default=1.0, gt=0.0)
+
+
 class KissSLAMConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="kiss_slam_")
     out_dir: str = "slam_output"
@@ -76,6 +82,7 @@ class KissSLAMConfig(BaseSettings):
     occupancy_mapper: OccupancyMapperConfig = OccupancyMapperConfig()
     loop_closer: LoopCloserConfig = LoopCloserConfig()
     pose_graph_optimizer: PoseGraphOptimizerConfig = PoseGraphOptimizerConfig()
+    visualization: VisualizationConfig = VisualizationConfig()
 
     def kiss_icp_config(self) -> KISSConfig:
         return KISSConfig(

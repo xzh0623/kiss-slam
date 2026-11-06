@@ -66,7 +66,7 @@ def kiss_slam(
         False,
         "--visualize",
         "-v",
-        help="[Optional] Visualize Ground Truth Loop Closures in the data sequence",
+        help="[Optional] Visualize SLAM trajectory (and GT trajectory when available)",
         rich_help_panel="Additional Options",
     ),
     refuse_scans: bool = typer.Option(

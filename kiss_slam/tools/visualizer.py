@@ -33,8 +33,11 @@ RED = np.array([128, 0, 0]) / 255.0
 BLACK = np.array([0, 0, 0]) / 255.0
 BLUE = np.array([0.4, 0.5, 0.9])
 GREEN = np.array([0.4, 0.9, 0.5])
+CYAN = np.array([0.0, 0.9, 1.0])
 SPHERE_SIZE_KEYPOSES = 1.0
 SPHERE_SIZE_ODOMETRY = 0.2
+DASH_ON = 1.0
+DASH_OFF = 1.0
 
 
 def transform_points(pcd, T):
@@ -53,7 +56,13 @@ class StubVisualizer(ABC):
 
 class RegistrationVisualizer(StubVisualizer):
     # Public Interaface ----------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(
+        self,
+        gt_poses=None,
+        gt_color=None,
+        dash_on: float = DASH_ON,
+        dash_off: float = DASH_OFF,
+    ):
         try:
             self.o3d = importlib.import_module("open3d")
         except ModuleNotFoundError as err:
@@ -79,6 +88,15 @@ class RegistrationVisualizer(StubVisualizer):
         self.vis = self.o3d.visualization.VisualizerWithKeyCallback()
         self._register_key_callbacks()
         self._initialize_visualizer()
+
+        # Draw GT path once if available in the dataset.
+        self.gt_line = None
+        if gt_poses is not None:
+            gt_color = CYAN if gt_color is None else np.asarray(gt_color, dtype=np.float64)
+            gt_xyz = np.asarray(gt_poses, dtype=np.float64)[:, :3, 3]
+            self.gt_line = self._make_dashed_line(gt_xyz, gt_color, dash_on, dash_off)
+            if self.gt_line is not None:
+                self.vis.add_geometry(self.gt_line, reset_bounding_box=False)
 
     def update(self, slam):
         self._update_geometries(slam)
@@ -147,6 +165,22 @@ class RegistrationVisualizer(StubVisualizer):
         line_set_closure.lines = self.o3d.utility.Vector2iVector(lines)
         line_set_closure.colors = self.o3d.utility.Vector3dVector(colors)
         return line_set_closure
+
+    def _make_dashed_line(self, xyz, color, dash_on, dash_off):
+        if xyz.shape[0] < 2:
+            return None
+
+        seg_len = np.linalg.norm(np.diff(xyz, axis=0), axis=1)
+        arc_start = np.concatenate([[0.0], np.cumsum(seg_len)[:-1]])
+        idx = np.nonzero((arc_start % (dash_on + dash_off)) < dash_on)[0]
+        if idx.size == 0:
+            return None
+
+        line = self.o3d.geometry.LineSet()
+        line.points = self.o3d.utility.Vector3dVector(xyz)
+        line.lines = self.o3d.utility.Vector2iVector(np.stack([idx, idx + 1], axis=1))
+        line.colors = self.o3d.utility.Vector3dVector(np.tile(color, (len(idx), 1)))
+        return line
 
     def _add_frames(self, poses, size, color):
         frames = []
